@@ -1,0 +1,49 @@
+# https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
+name: "Setup Poetry Environment"
+description: "Sets up Python, installs Poetry, configures virtual environment, and installs dependencies."
+author: "concertypin"
+
+inputs:
+  python-version:
+    description: "Python version to use, it will pass to actions/setup-python so check its documentation for valid values"
+    required: true
+    default: "3.13"
+  working-directory:
+    description: "Working directory for poetry commands"
+    required: false
+    default: "."
+  install-args:
+    description: "Arguments for poetry install command"
+    required: false
+    default: "--without dev"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install poetry
+      uses: abatilo/actions-poetry@v3
+
+    - name: Setup a local virtual environment
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        poetry config virtualenvs.create true --local
+        poetry config virtualenvs.in-project true --local
+
+    - name: Define a cache for the virtual environment
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.working-directory }}/.venv
+        key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles(format('{0}/poetry.lock', inputs.working-directory)) }}
+        restore-keys: |
+          venv-${{ runner.os }}-${{ inputs.python-version }}-
+
+    - name: Install the project dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: poetry install ${{ inputs.install-args }}
