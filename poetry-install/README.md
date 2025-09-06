@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Poetry Environment
-        uses: concertypin/action/poetry-install/action.yml@your-hash
+        uses: concertypin/action/poetry-install@your-hash
         with:
           python-version: '3.12'
           install-args: '--with dev' # Or whatever args you need, defaults to '--without dev'
@@ -49,3 +49,4 @@ jobs:
 | `python-version`    | The Python version to use.                | `'3.12'`          | `true`   |
 | `working-directory` | The directory where `poetry` commands run.| `'.'`             | `false`  |
 | `install-args`      | Extra arguments for the `poetry install`. | `'--without dev'` | `false`  |
+
