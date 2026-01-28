@@ -1,0 +1,81 @@
+name: "Setup pnpm Environment"
+description: "Sets up pnpm, installs deps. (Supports ubuntu-latest only)"
+author: "concertypin"
+
+branding:
+  color: "blue"
+  icon: "package"
+
+inputs:
+  node-version:
+    description: "Version of Node.js to use."
+    required: false
+    deprecationMessage: "It's better to specify the Node.js version in package.json 'engines' field."
+  working-directory:
+    description: "Working directory for pnpm commands. It should contain package.json."
+    required: false
+    default: "."
+  install-playwright-deps:
+    description: "Whether to install Playwright dependencies. Useful for Vitest browser testing."
+    required: false
+    default: "false"
+  repo-root:
+    description: "Root of the repository. Used to locate pnpm-lock.yaml."
+    required: false
+    default: "."
+  gigachad:
+    description: "스탑 오버 띵킹, 만삣삐. Overrides runner OS check. (For gigachads only)"
+    required: false
+    default: "false"
+    deprecationMessage: "Gigachad is valid on your own responsibility."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Runner OS
+      if: ${{ runner.os != 'Linux' && inputs.gigachad != 'true' }}
+      run: |
+        echo "::error::This action only supports ubuntu-latest (Linux)."
+        exit 1
+      shell: bash
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        package_json_file: "${{ inputs.working-directory }}/package.json"
+        run_install: false
+
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: "${{ inputs.working-directory }}/package.json"
+        node-version: ${{ inputs.node-version }}
+        cache: "pnpm"
+        cache-dependency-path: "${{ inputs.repo-root }}/pnpm-lock.yaml"
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Cache Playwright browsers
+      id: playwright-cache
+      uses: actions/cache@v4
+      if: ${{ inputs.install-playwright-deps == 'true' }}
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-browsers-${{ hashFiles(format('{0}/pnpm-lock.yaml', inputs.repo-root)) }}
+        restore-keys: |
+          ${{ runner.os }}-playwright-browsers-
+
+    - name: Install Playwright browsers
+      if: ${{ inputs.install-playwright-deps == 'true' && steps.playwright-cache.outputs.cache-hit != 'true' }}
+      run: pnpm exec playwright install
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Install Playwright dependencies
+      if: ${{ inputs.install-playwright-deps == 'true'}}
+      run: pnpm exec playwright install-deps
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
