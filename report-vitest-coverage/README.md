@@ -47,7 +47,7 @@ jobs:
         run: pnpm vitest run --coverage.enabled --coverage.reporter json-summary
 
       - name: Report
-        if: always()
+        if: ${{ github.event_name == 'pull_request' && always()}}
         uses: concertypin/action/report-vitest-coverage@your-hash
         with:
           threshold: 80
