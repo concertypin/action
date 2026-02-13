@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm Environment
-        uses: concertypin/action/pnpm-setup@your-hash
+        uses: concertypin/action/pnpm-install@your-hash
         with:
           # Reads version from package.json > engines by default
           # node-version: '20' 
@@ -64,4 +64,5 @@ jobs:
 
 - **OS Support:** Officially supports `ubuntu-latest`.
 - **Caching:** Automatically caches `node_modules` (via pnpm) and Playwright browsers to speed up your CI/CD pipelines.
+
 - **Node.js Version:** If `node-version` is not provided, the action will automatically detect the required version from the `engines` field in your `package.json`.
